@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ONNX Playground</title>
+
+    <!-- BeerCSS Styles & Scripts -->
+    <link href="https://cdn.jsdelivr.net/npm/beercss@latest/dist/cdn/beer.min.css" rel="stylesheet">
+    <script type="module" src="https://cdn.jsdelivr.net/npm/beercss@latest/dist/cdn/beer.min.js"></script>
+    <script type="module"
+        src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@latest/dist/cdn/material-dynamic-colors.min.js"></script>
+    <!-- HTMX & Hyperscript -->
+    <script src="https://unpkg.com/htmx.org"></script>
+    <script src='https://unpkg.com/htmx.org/dist/ext/response-targets.js'></script>
+    <script src="https://unpkg.com/hyperscript.org@latest"></script>
+</head>
+
+<body hx-get="/pages/yolo.html" hx-target="#content" hx-trigger="load">
+    <!-- AppBar -->
+    <header class="blur">
+        <nav>
+            <button data-ui="#drawer" class="circle transparent">
+                <i>menu</i>
+            </button>
+            <h5 class="max center-align"><i>smart_toy</i> ONNX Playground</h5>
+        </nav>
+    </header>
+
+    <!-- Drawer -->
+    <dialog id="drawer" class="left no-padding small-blur left-shadow">
+        <nav class="drawer">
+            <header>
+                <nav>
+                    <i>handyman</i>
+                    <h6 class="max">Tools</h6>
+                    <button data-ui="#drawer" class="transparent circle large">
+                        <i>close</i>
+                    </button>
+                </nav>
+            </header>
+            <a hx-get="/pages/yolo.html" class="wave" hx-target="#content" data-ui="#drawer">
+                <i>image</i>
+                <span>YOLOv8</span>
+            </a>
+        </nav>
+    </dialog>
+
+    <!-- Content Area -->
+    <main id="content" class="responsive"></main>
+
+    <style>
+        #content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        body {
+            background: linear-gradient(-45deg, #934932, #932650, #197597, #179074);
+            background-size: 400% 400%;
+            animation: gradient 30s ease infinite;
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+    </style>
+</body>
+
+</html>

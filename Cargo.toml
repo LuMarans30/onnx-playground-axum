@@ -1,0 +1,20 @@
+[package]
+name = "onnx-playground-axum"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ab_glyph = "0.2.29"
+axum = "0.8.1"
+axum_typed_multipart = { version = "0.15.1", features = ["tempfile_3"] }
+image = "0.25.5"
+imageproc = "0.25.0"
+minijinja = { version = "1.0.9", features = ["loader"] }
+ndarray = "0.16.1"
+ort = "2.0.0-rc.9"
+serde = { version = "1.0.218", features = ["derive"] }
+tempfile = "3.17.1"
+tokio = { version = "1.43.0", features = ["rt-multi-thread", "process"] }
+tower-http = { version = "0.6.2", features = ["fs"] }
+tracing = "0.1.41"
+uuid = { version = "1.15.1", features = ["v4"] }

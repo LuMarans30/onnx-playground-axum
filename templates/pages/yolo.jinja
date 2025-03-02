@@ -1,0 +1,54 @@
+<h3>YOLOv8</h3>
+
+<p>Identify objects in images</p>
+
+<div hx-ext='response-targets'>
+    <button class="wave">
+        <i>photo</i>
+        <span>Upload image</span>
+        <input type="file" name="image" hx-post="/yolo/upload" hx-encoding="multipart/form-data" hx-target="#message"
+            hx-target-4xx="#message" hx-swap="innerHTML">
+    </button>
+
+    <img hidden id="processed-image" src="" alt="Processed image" width="640" height="480">
+
+    <div id="snackbar" class="snackbar">
+        <div class="max" id="message">
+        </div>
+        <a class="inverse-link" onclick="this.parentElement.classList.remove('active')"><i>close</i></a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('htmx:afterSwap', (e) => {
+        document.getElementById('message').innerHTML = JSON.parse(e.detail.xhr.responseText).message;
+        document.getElementById('snackbar').classList.add('active');
+
+        console.log(e.detail.xhr);
+
+        if (e.detail.xhr.statusText != 'OK') {
+            document.getElementById('snackbar').classList.add('error');
+        } else {
+            fetch('/yolo/process', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: e.detail.xhr.responseText
+            }).then(response => {
+                if (response.ok) {
+                    var image = document.getElementById('processed-image');
+                    response.json().then(data => {
+                        image.src = data.image_path;
+                        image.hidden = false;
+                    })
+                }
+            })
+        }
+
+        setTimeout(() => {
+            document.getElementById('snackbar').classList.remove('active');
+            document.getElementById('snackbar').classList.remove('error');
+        }, 3000);
+    })
+</script>
