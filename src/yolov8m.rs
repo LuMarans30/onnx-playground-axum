@@ -1,8 +1,4 @@
-use std::{
-    ffi::OsString,
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::{fs::DirEntry, path::Path, sync::Arc};
 
 use ab_glyph::{FontRef, PxScale};
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
@@ -39,55 +35,37 @@ pub async fn process_image(
 ) -> impl IntoResponse {
     let image_id = payload.image_id;
 
-    let mut input_path = String::new();
-    let mut file_ext = "";
-    let mut file_name = OsString::new();
-    let mut file_path = PathBuf::new();
-
-    for path in std::fs::read_dir(UPLOAD_DIR).unwrap() {
-        let dir_entry = path.unwrap();
-        file_name = dir_entry.file_name();
-        let file_name_str = file_name.to_str().unwrap();
-        file_path = dir_entry.path();
-        let path_str = file_path.to_str().unwrap();
-        println!("File name: {}", file_name_str);
-        println!("Image ID: {}", image_id.as_str());
-        println!("File path: {}", path_str);
-        file_ext = match get_extension_from_filename(path_str) {
-            Some(ext) => ext,
-            None => {
+    let input_dir_entry_result: Option<Result<DirEntry, std::io::Error>> =
+        match std::fs::read_dir(UPLOAD_DIR) {
+            Ok(mut dir) => dir.find(|path| {
+                path.as_ref()
+                    .unwrap()
+                    .file_name()
+                    .to_str()
+                    .unwrap()
+                    .contains(&image_id)
+            }),
+            Err(_) => {
                 return (
                     StatusCode::INTERNAL_SERVER_ERROR,
                     Json(ProcessImageResponse {
-                        status: "Failed to get file extension".to_string(),
+                        status: "Error reading upload directory".to_string(),
                         image_path: None,
                     }),
                 );
             }
         };
-        if file_name_str == format!("{}.{}", image_id, file_ext).as_str() {
-            input_path = dir_entry.path().to_str().unwrap().to_string();
-        }
-    }
 
-    if input_path.is_empty() {
-        return (
-            StatusCode::NOT_FOUND,
-            Json(ProcessImageResponse {
-                status: "Image not found".to_string(),
-                image_path: None,
-            }),
-        );
-    }
+    let input_path = input_dir_entry_result.unwrap().unwrap().path();
 
-    let output_path = format!("{}{}.{}", PROCESS_DIR, image_id, file_ext);
-
-    println!(
-        "Uploaded image: {}, output path: {}",
-        input_path, output_path
+    let output_path = format!(
+        "{}{}.{}",
+        PROCESS_DIR,
+        image_id,
+        get_extension_from_filename(input_path.to_str().unwrap()).unwrap()
     );
 
-    match identify_objects(&input_path, &output_path).await {
+    match identify_objects(input_path.to_str().unwrap(), &output_path).await {
         Ok(_) => (
             StatusCode::OK,
             Json(ProcessImageResponse {
