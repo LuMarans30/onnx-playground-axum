@@ -103,7 +103,6 @@ async fn upload_image(
     let file_name = image.metadata.file_name.unwrap();
     let image_extension = get_extension_from_filename(file_name.as_str()).unwrap();
     let file_path = format!("{}{}.{}", UPLOAD_DIR, id, image_extension);
-    println!("File path: {}", file_path);
 
     // Ensure the file is an image
     match image.metadata.content_type {

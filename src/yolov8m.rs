@@ -35,37 +35,62 @@ pub async fn process_image(
 ) -> impl IntoResponse {
     let image_id = payload.image_id;
 
-    let input_dir_entry_result: Option<Result<DirEntry, std::io::Error>> =
-        match std::fs::read_dir(UPLOAD_DIR) {
-            Ok(mut dir) => dir.find(|path| {
-                path.as_ref()
-                    .unwrap()
-                    .file_name()
-                    .to_str()
-                    .unwrap()
-                    .contains(&image_id)
-            }),
-            Err(_) => {
-                return (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(ProcessImageResponse {
-                        status: "Error reading upload directory".to_string(),
-                        image_path: None,
-                    }),
-                );
+    let input_dir: Option<Result<DirEntry, std::io::Error>> = match std::fs::read_dir(UPLOAD_DIR) {
+        Ok(mut dir) => dir.find(|path| {
+            if let Ok(path) = path {
+                if let Some(filename) = path.file_name().to_str() {
+                    filename.contains(&image_id)
+                } else {
+                    false
+                }
+            } else {
+                false
             }
-        };
+        }),
+        Err(_) => {
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ProcessImageResponse {
+                    status: "Error reading upload directory".to_string(),
+                    image_path: None,
+                }),
+            );
+        }
+    };
 
-    let input_path = input_dir_entry_result.unwrap().unwrap().path();
+    let input_dir = match input_dir {
+        Some(Ok(dir)) => dir.path(),
+        Some(Err(err)) => {
+            eprintln!("Error reading upload directory: {:?}", err);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ProcessImageResponse {
+                    status: "Error reading upload directory".to_string(),
+                    image_path: None,
+                }),
+            );
+        }
+        None => {
+            return (
+                StatusCode::NOT_FOUND,
+                Json(ProcessImageResponse {
+                    status: "Image not found".to_string(),
+                    image_path: None,
+                }),
+            );
+        }
+    };
+
+    let input_path = input_dir.to_str().unwrap();
 
     let output_path = format!(
         "{}{}.{}",
         PROCESS_DIR,
         image_id,
-        get_extension_from_filename(input_path.to_str().unwrap()).unwrap()
+        get_extension_from_filename(input_path).unwrap()
     );
 
-    match identify_objects(input_path.to_str().unwrap(), &output_path).await {
+    match identify_objects(input_path, &output_path).await {
         Ok(_) => (
             StatusCode::OK,
             Json(ProcessImageResponse {
